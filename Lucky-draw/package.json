@@ -1,0 +1,12 @@
+{
+  "name": "lucky-draw",
+  "version": "1.0.0",
+  "description": "课堂抽签系统",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
