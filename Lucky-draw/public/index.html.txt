@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专属实时抽签系统</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        h2 { text-align: center; color: #1890ff; }
+        .form { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+        button { background: #1890ff; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .card { border: 2px dashed #eee; padding: 15px; text-align: center; border-radius: 8px; background: #fafafa; }
+        .card.taken { border-style: solid; border-color: #52c41a; background: #f6ffed; }
+        .admin { margin-top: 30px; text-align: center; border-top: 1px solid #eee; padding-top: 15px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>🎯 实时抽签系统 (1-6号)</h2>
+    <div class="form">
+        <input type="text" id="stuName" placeholder="输入姓名（抽后不可更改）">
+        <button onclick="draw()">开始抽签</button>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="admin"><button style="background:#ff4d4f" onclick="resetPool()">教师重置</button></div>
+</div>
+<script>
+    async function refresh() {
+        const res = await fetch('/api/status');
+        const slots = await res.json();
+        document.getElementById('grid').innerHTML = slots.map(s => `
+            <div class="card ${s.isTaken?'taken':''}">
+                <h3>${s.id} 号</h3>
+                <div>${s.isTaken ? s.studentName : '🔍 待抽取'}</div>
+            </div>
+        `).join('');
+    }
+    async function draw() {
+        const name = document.getElementById('stuName').value.trim();
+        if(!name) return alert('请输入名字！');
+        const res = await fetch('/api/draw', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+        const data = await res.json();
+        alert(data.msg || `成功抽到 ${data.num} 号！`);
+        if(data.success) document.getElementById('stuName').value = '';
+        refresh();
+    }
+    async function resetPool() {
+        const password = prompt('请输入重置密码:');
+        if(!password) return;
+        const res = await fetch('/api/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) });
+        const data = await res.json();
+        alert(data.msg);
+        refresh();
+    }
+    refresh();
+    setInterval(refresh, 2000); // ✨ 每隔2秒自动更新数据，实现实时同步
+</script>
+</body>
+</html>
