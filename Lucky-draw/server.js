@@ -6,9 +6,9 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 初始化 1-6 号抽签池
+// 🎯 初始化 1-6 号抽签池
 let drawData = {
-    passcode: "admin123", // 👈 老师的重置密码，可以在这里改
+    passcode: "admin123", // 👈 老师的重置密码，可以在这里修改
     slots: Array.from({ length: 6 }, (_, i) => ({ id: i + 1, studentName: null, isTaken: false }))
 };
 
@@ -37,31 +37,9 @@ app.post('/api/draw', (req, res) => {
         return res.json({ success: false, msg: "非常抱歉，6个号已被全部抽完！" });
     }
 
-    // 计算当前是第几个来抽签的人（用总数 6 减去剩余空位数）
-    const currentOrder = 6 - availableSlots.length + 1; 
-
-    let luckySlot;
-
-    // ===================================================
-    // 🔮 老师的全新暗箱操作：锁定第一和第二个抽签的人
-    // ===================================================
-    if (currentOrder === 1 || currentOrder === 2) {
-        // 从当前还剩的空位里，筛选出属于 4、5、6 号的格子
-        const cheatPool = availableSlots.filter(s => s.id === 4 || s.id === 5 || s.id === 6);
-        
-        // 如果 4、5、6 号里还有空位，就在这三个号里随机选一个给前两个人
-        if (cheatPool.length > 0) {
-            const randomIndex = Math.floor(Math.random() * cheatPool.length);
-            luckySlot = cheatPool[randomIndex];
-        }
-    }
-
-    // 如果不是前两个人，或者 4,5,6 号因为意外没有空位了，就走正常的纯随机抽签
-    if (!luckySlot) {
-        const randomIndex = Math.floor(Math.random() * availableSlots.length);
-        luckySlot = availableSlots[randomIndex];
-    }
-    // ===================================================
+    // 🎲 纯随机抽取：没有任何干预，全凭运气
+    const randomIndex = Math.floor(Math.random() * availableSlots.length);
+    const luckySlot = availableSlots[randomIndex];
 
     // 3. 锁定该位置
     const targetSlot = drawData.slots.find(s => s.id === luckySlot.id);
